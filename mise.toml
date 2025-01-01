@@ -1,0 +1,8 @@
+[tools]
+node = "20.11.1"
+postgres = "16.2"
+pnpm = "8.15.4"
+
+[env]
+NODE_ENV = "development"
+DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/codex_dev"
