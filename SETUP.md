@@ -89,3 +89,18 @@ Start the development server
 Begin building additional features
 -----------------------------------
 Would you like me to add any additional sections to this setup guide?
+
+Configure Database:
+# Connect to PostgreSQL as superuser
+psql postgres
+
+# In the PostgreSQL prompt, run these commands:
+CREATE USER postgres WITH PASSWORD 'postgres' SUPERUSER;
+\q
+
+# Create the database
+createdb codex_dev
+
+# Grant all privileges
+psql -d codex_dev -c "GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres;"
+psql -d codex_dev -c "GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO postgres;"

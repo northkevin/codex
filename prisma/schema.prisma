@@ -13,7 +13,7 @@ model Podcast {
   updatedAt       DateTime  @updatedAt
   title           String
   url             String    @unique
-  platform        String    // youtube, spotify, etc.
+  platform        String // youtube, spotify, etc.
   channelId       String?
   channelTitle    String?
   publishedAt     DateTime?
@@ -23,5 +23,5 @@ model Podcast {
   viewCount       Int?
   likeCount       Int?
   watchedAt       DateTime?
-  metadata        Json?     // Additional platform-specific data
-} 
+  metadata        Json? // Additional platform-specific data
+}
