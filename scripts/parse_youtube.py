@@ -1,178 +1,111 @@
-"""Main script for processing YouTube watch history in batches."""
+"""Parse YouTube watch history HTML file into JSON."""
 from pathlib import Path
+from bs4 import BeautifulSoup
 import json
-import os
-from bs4 import BeautifulSoup, SoupStrainer
-from tqdm import tqdm
-import itertools
-from youtube_parser import parse_single_entry
+import re
+from dateutil import parser
 
-class HistoryProcessor:
-    def __init__(self, html_path, output_dir=None):
-        self.html_path = Path(html_path)
-        self.output_dir = Path(output_dir or self.html_path.parent)
-        self.batch_dir = self.output_dir / 'batches'
-        self.batch_dir.mkdir(exist_ok=True)
-        
-    def process_history(self, batch_size=100, max_entries=None):
-        """Process the history file in batches using targeted parsing."""
-        # Add validation at the start
-        file_size = self.html_path.stat().st_size
-        if file_size == 0:
-            raise ValueError("History file is empty")
-        
-        print(f"File size: {file_size / (1024*1024):.2f} MB")
-        
-        # Quick validation of file content
-        with open(self.html_path, 'r', encoding='utf-8') as f:
-            first_line = f.readline().strip()
-            if not first_line.startswith('<!DOCTYPE html>'):
-                print("Warning: File doesn't start with DOCTYPE declaration - might not be valid HTML")
-        
-        videos = []
-        invalid_entries = []
-        processed = 0
-        
-        print("Starting parse of history file...")
-        
-        # Only parse div elements with specific classes we care about
-        parse_filter = SoupStrainer('div', class_=['content-cell', 'mdl-typography--body-1'])
-        
-        print("Parsing HTML file (this might take a moment)...")
-        with open(self.html_path, 'r', encoding='utf-8') as f:
-            # Use lxml parser for better performance
-            soup = BeautifulSoup(f.read(), 'html.parser', parse_only=parse_filter)
-        
-        # Find all relevant divs that match our criteria
-        content_cells = soup.find_all(lambda tag: tag.name == 'div' 
-                                     and 'content-cell' in tag.get('class', [])
-                                     and 'mdl-typography--body-1' in tag.get('class', []))
-        
-        total_cells = len(content_cells)
-        print(f"Found {total_cells} relevant entries to process")
-        
-        cell_iterator = content_cells
-        if max_entries:
-            cell_iterator = itertools.islice(cell_iterator, max_entries)
-        
-        with tqdm(total=min(total_cells, max_entries or float('inf'))) as pbar:
-            current_batch = []
-            
-            for cell in cell_iterator:
-                entry = parse_single_entry(cell)
-                if entry:
-                    current_batch.append(entry)
-                else:
-                    invalid_entries.append(cell.text[:100] + "...")
-                
-                processed += 1
-                pbar.update(1)
-                
-                if len(current_batch) >= batch_size:
-                    self._save_batch(current_batch, processed)
-                    videos.extend(current_batch)
-                    current_batch = []
-            
-            if current_batch:
-                self._save_batch(current_batch, processed)
-                videos.extend(current_batch)
-        
-        return videos, invalid_entries
-    
-    def _save_batch(self, batch, processed_count):
-        """Save a batch of entries to a temporary JSON file."""
-        batch_file = self.batch_dir / f'watch-history-batch-{processed_count}.json'
-        with open(batch_file, 'w', encoding='utf-8') as f:
-            json.dump(batch, f, indent=2, ensure_ascii=False)
-    
-    def merge_batches(self, output_path):
-        """Merge all batch files into final JSON file and cleanup."""
-        all_videos = []
-        batch_files = sorted(self.batch_dir.glob('watch-history-batch-*.json'))
-        
-        print(f"\nMerging {len(batch_files)} batch files...")
-        for batch_file in tqdm(batch_files):
-            with open(batch_file, 'r', encoding='utf-8') as f:
-                all_videos.extend(json.load(f))
-            batch_file.unlink()
-        
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(all_videos, f, indent=2, ensure_ascii=False)
-        
-        # Cleanup batch directory if empty
-        if not any(self.batch_dir.iterdir()):
-            self.batch_dir.rmdir()
-    
-    def test_parse(self, num_entries=5):
-        """Test parse a small number of entries to verify everything works."""
-        from bs4 import BeautifulSoup, SoupStrainer
-        
-        parse_filter = SoupStrainer('div', class_=['content-cell', 'mdl-typography--body-1'])
-        
-        print(f"Testing parse with {num_entries} entries...")
-        with open(self.html_path, 'r', encoding='utf-8') as f:
-            content = f.read(50000)  # Read first 50KB
-            soup = BeautifulSoup(content, 'html.parser', parse_only=parse_filter)
-            
-            cells = soup.find_all(lambda tag: tag.name == 'div' 
-                                and 'content-cell' in tag.get('class', [])
-                                and 'mdl-typography--body-1' in tag.get('class', []))
-            
-            if not cells:
-                raise ValueError("No valid entries found in test parse")
-            
-            print(f"Found {len(cells)} entries in test parse")
-            for cell in cells[:num_entries]:
-                entry = parse_single_entry(cell)
-                if entry:
-                    print(f"Successfully parsed: {entry.get('title', 'Unknown Title')}")
-                else:
-                    print("Failed to parse entry")
+# File paths
+INPUT_FILE = "/Users/kevinnorth/Downloads/Takeout/YouTube and YouTube Music/history/watch-history.html"
+OUTPUT_FILE = "watch-history.json"
 
-def main():
-    history_path = Path(os.getenv('YOUTUBE_HISTORY_FILE', './watch-history.html'))
-    test_mode = os.getenv('TEST_MODE', 'false').lower() == 'true'
-    
-    if test_mode:
-        history_path = Path('./watch-history-sample.html')
-    
-    if not history_path.exists():
-        print(f"Error: File not found: {history_path}")
-        if test_mode:
-            print("Please create a sample file first using create_test_sample.py")
-        else:
-            print("Please set YOUTUBE_HISTORY_FILE environment variable to the path of your history file")
-            print("Or set TEST_MODE=true to use a sample file")
-        return
-    
-    print(f"Reading from: {history_path}")
-    print(f"File size: {history_path.stat().st_size / (1024*1024):.2f} MB")
-    
-    processor = HistoryProcessor(history_path)
-    
-    # Test parse first
+# Make sure input file exists
+if not Path(INPUT_FILE).exists():
+    print(f"Error: Cannot find {INPUT_FILE}")
+    exit(1)
+
+print(f"Reading from: {INPUT_FILE}")
+print(f"File size: {Path(INPUT_FILE).stat().st_size / (1024*1024):.2f} MB")
+
+print("Parsing HTML file (this might take a minute)...")
+print("Loading: ", end='', flush=True)
+
+# Parse the HTML file
+with open(INPUT_FILE, 'r', encoding='utf-8') as f:
+    for i, _ in enumerate(f):
+        if i % 10000 == 0:  # Print a dot every 10000 lines
+            print('.', end='', flush=True)
+    f.seek(0)  # Reset file pointer to beginning
+    soup = BeautifulSoup(f, 'html.parser')
+
+print("\nHTML parsing complete!")
+
+video_entries = []
+
+# 1. Get body tag
+body = soup.find('body')
+if not body:
+    print("Error: No body tag found")
+    exit(1)
+
+# 2. Get the main container div
+main_grid = body.find('div', class_='mdl-grid')
+if not main_grid:
+    print("Error: No main grid found")
+    exit(1)
+
+# 3. Process each episode div
+count = 0
+for episode_div in main_grid.find_all('div', recursive=False):
     try:
-        processor.test_parse(5)
+        count += 1
+        if count % 1000 == 0:
+            print(f"Processed {count} entries...")
+        
+        # 4. Get the content div that has our video info (first content-cell)
+        content = episode_div.select_one('div.mdl-grid > div.content-cell.mdl-typography--body-1')
+        if not content:
+            continue
+        
+        # 5. Extract video info using proven parsing logic
+        video_link = content.find('a')
+        if not video_link:
+            continue
+            
+        # Extract video URL and title, normalizing whitespace
+        url = video_link.get('href', '')
+        title = ' '.join(video_link.text.split())
+        
+        # Extract video ID from URL
+        video_id_match = re.search(r'[?&]v=([^&]+)', url)
+        video_id = video_id_match.group(1) if video_id_match else None
+        
+        # Find channel info (second anchor tag)
+        channel_elem = content.find_all('a')
+        channel_info = channel_elem[1] if len(channel_elem) > 1 else None
+        channel_title = channel_info.text.strip() if channel_info else None
+        channel_url = channel_info.get('href', '') if channel_info else None
+        
+        # Extract timestamp - it's the text after the channel link
+        watched_at = None
+        if channel_info:
+            timestamp_text = ''.join(text for text in channel_info.next_siblings if isinstance(text, str))
+            timestamp_text = timestamp_text.strip()
+            try:
+                watched_at = parser.parse(timestamp_text).isoformat()
+            except ValueError as e:
+                print(f"Error parsing timestamp '{timestamp_text}': {e}")
+        
+        video = {
+            'title': title,
+            'url': url,
+            'video_id': video_id,
+            'channel_title': channel_title,
+            'channel_url': channel_url,
+            'watched_at': watched_at,
+            'platform': 'youtube'
+        }
+        
+        # print(f"Found: {video['title']}")
+        video_entries.append(video)
+        
     except Exception as e:
-        print(f"Test parse failed: {e}")
-        return
-    
-    # If test parse succeeds, proceed with full processing
-    videos, invalid_entries = processor.process_history(batch_size=100)
-    
-    # Save final output
-    output_path = Path('./watch-history.json')
-    processor.merge_batches(output_path)
-    
-    print(f"\nProcessed {len(videos)} valid entries")
-    print(f"Found {len(invalid_entries)} invalid entries")
-    print(f"Output saved to {output_path.absolute()}")
-    
-    # Save invalid entries for review
-    if invalid_entries:
-        with open('invalid-entries.txt', 'w', encoding='utf-8') as f:
-            f.write('\n---\n'.join(invalid_entries))
-        print(f"Invalid entries saved to invalid-entries.txt")
+        print(f"Failed to parse entry: {str(e)}")
+        continue
 
-if __name__ == '__main__':
-    main()
+# Save to JSON file
+with open(OUTPUT_FILE, 'w', encoding='utf-8') as f:
+    json.dump(video_entries, f, indent=2, ensure_ascii=False)
+
+print(f"\nProcessed {len(video_entries)} videos")
+print(f"Output saved to {OUTPUT_FILE}")

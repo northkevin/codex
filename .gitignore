@@ -5,9 +5,10 @@ dist/
 .DS_Store
 youtube_history.json
 
-scripts/*.json
-scripts/*.html
-__pycache__/
-
 watch-history-sample.html
 watch-history-test-*.html
+
+*.html
+*.json
+__pycache__/
+.pytest_cache/
