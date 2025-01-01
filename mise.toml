@@ -1,7 +1,7 @@
 [tools]
-node = "20.11.1"
-postgres = "16.2"
-pnpm = "8.15.4"
+node = "20.11"
+postgres = "system"
+python = "3.11"
 
 [env]
 NODE_ENV = "development"

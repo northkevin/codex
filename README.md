@@ -1,3 +1,5 @@
+file:///Users/kevinnorth/Downloads/Takeout/YouTube%20and%20YouTube%20Music/history/watch-history.html
+
 # Codex - Personal Knowledge Base
 
 ## Quick Start

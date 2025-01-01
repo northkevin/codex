@@ -21,11 +21,31 @@ Setup Steps
 Install Prerequisites:
 Install Homebrew if not present
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-Install essential tools
+
+Install pnpm:
+curl -fsSL https://get.pnpm.io/install.sh | sh -
+
+# Close and reopen your terminal, or run:
+source ~/.zshrc
+
+Install mise and PostgreSQL:
 brew install mise postgresql@16 watchman
 brew install --cask pgadmin4
-Start PostgreSQL service
+
+Configure mise and PostgreSQL:
+# Add PostgreSQL binaries to PATH
+echo 'export PATH="/opt/homebrew/opt/postgresql@16/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc  # or restart your terminal
+
+# Initialize mise
+mise install
+
+# Start PostgreSQL service
 brew services start postgresql@16
+
+# Verify PostgreSQL installation
+psql -c "SELECT version();"
+
 Install Project Dependencies:
 Initialize Node.js project
 pnpm init
