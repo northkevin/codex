@@ -1,9 +1,9 @@
 """Parse YouTube watch history HTML file into JSON."""
 from pathlib import Path
-from bs4 import BeautifulSoup
 import json
 import re
 from dateutil import parser
+from bs4 import BeautifulSoup, SoupStrainer
 
 # File paths
 INPUT_FILE = "/Users/kevinnorth/Downloads/Takeout/YouTube and YouTube Music/history/watch-history.html"
@@ -18,28 +18,21 @@ print(f"Reading from: {INPUT_FILE}")
 print(f"File size: {Path(INPUT_FILE).stat().st_size / (1024*1024):.2f} MB")
 
 print("Parsing HTML file (this might take a minute)...")
-print("Loading: ", end='', flush=True)
+
+# Only parse the divs we care about
+parse_filter = SoupStrainer('div', class_=['outer-cell', 'mdl-grid', 'content-cell'])
 
 # Parse the HTML file
 with open(INPUT_FILE, 'r', encoding='utf-8') as f:
-    for i, _ in enumerate(f):
-        if i % 10000 == 0:  # Print a dot every 10000 lines
-            print('.', end='', flush=True)
-    f.seek(0)  # Reset file pointer to beginning
-    soup = BeautifulSoup(f, 'html.parser')
+    # Use lxml parser for better performance
+    soup = BeautifulSoup(f, 'lxml', parse_only=parse_filter)
 
-print("\nHTML parsing complete!")
+print("HTML parsing complete!")
 
 video_entries = []
 
-# 1. Get body tag
-body = soup.find('body')
-if not body:
-    print("Error: No body tag found")
-    exit(1)
-
-# 2. Get the main container div
-main_grid = body.find('div', class_='mdl-grid')
+# 1. Get body tag and main grid
+main_grid = soup.find('div', class_='mdl-grid')
 if not main_grid:
     print("Error: No main grid found")
     exit(1)
