@@ -6,3 +6,10 @@ python = "3.11"
 [env]
 NODE_ENV = "development"
 DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/codex_dev"
+
+[tasks]
+"scripts:setup" = { shell = "pip install -r scripts/requirements.txt" }
+"scripts:parse" = { shell = '''
+    pip install -r scripts/requirements.txt && \
+    python scripts/parse_youtube.py "$YOUTUBE_HISTORY_PATH"
+''' }

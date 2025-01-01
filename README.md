@@ -78,3 +78,10 @@ Tomorrow's first task will be:
 □ YouTube import script
 □ Podcast routes
 □ Data analysis features
+
+## Python Scripts Setup
+```bash
+mise run scripts:setup
+mise run scripts:parse
+
+```
