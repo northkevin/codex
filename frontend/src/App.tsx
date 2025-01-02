@@ -58,7 +58,7 @@ function App() {
 
       <div className="stat-sections">
         <div className="stat-section">
-          <h2>Top 10 Most Watched Channels</h2>
+          <h2>Top {stats.topChannels.length} Most Watched Channels</h2>
           <div className="channels-list">
             {stats.topChannels.map((channel, index) => (
               <div key={channel.channelTitle} className="channel-item">

@@ -59,7 +59,7 @@ router.get('/stats', async (_req: Request, res: Response) => {
                         videoId: 'desc'
                     }
                 },
-                take: 10
+                take: 20
             }),
             prisma.watchHistory.groupBy({
                 by: ['watchedAt'],
