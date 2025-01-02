@@ -3,7 +3,10 @@
         "target": "es2022",
         "module": "commonjs",
         "lib": [
-            "es2022"
+            "es2022",
+            "dom",
+            "dom.iterable",
+            "esnext"
         ],
         "strict": true,
         "esModuleInterop": true,
@@ -11,7 +14,14 @@
         "forceConsistentCasingInFileNames": true,
         "outDir": "./dist",
         "rootDir": "./src",
-        "moduleResolution": "node"
+        "moduleResolution": "node",
+        "typeRoots": [
+            "./node_modules/@types",
+            "./node_modules/.prisma/client"
+        ],
+        "types": [
+            "node"
+        ]
     },
     "include": [
         "src/**/*"

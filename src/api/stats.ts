@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, Prisma } from '@prisma/client'
 import cors from 'cors'
 
 const prisma = new PrismaClient()
@@ -32,13 +32,22 @@ router.get('/stats', async (_req: Request, res: Response) => {
                 take: 10
             }),
             prisma.watchHistory.groupBy({
-                by: [
-                    prisma.raw('date_part(\'year\', watched_at)::integer')
-                ],
+                by: ['watchedAt'],
                 _count: true,
                 orderBy: {
-                    _key: 'asc'
+                    watchedAt: 'asc'
                 }
+            }).then(results => {
+                const yearCounts = results.reduce((acc, curr) => {
+                    const year = new Date(curr.watchedAt).getFullYear()
+                    acc[year] = (acc[year] || 0) + curr._count
+                    return acc
+                }, {} as Record<number, number>)
+
+                return Object.entries(yearCounts).map(([year, count]) => ({
+                    _key: parseInt(year),
+                    _count: count
+                }))
             }),
             prisma.watchHistory.aggregate({
                 _min: {
