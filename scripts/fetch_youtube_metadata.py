@@ -1,145 +1,151 @@
 import os
 import json
-import logging
-from datetime import datetime
-from pathlib import Path
-from googleapiclient.discovery import build
-from dotenv import load_dotenv
+import time
+from typing import List, Dict, Any
+from datetime import datetime, timedelta
+import googleapiclient.discovery
+from googleapiclient.errors import HttpError
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-# Setup logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Configure API
+YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
+youtube = googleapiclient.discovery.build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
 # Constants
-MAX_VIDEOS_PER_REQUEST = 50
+BATCH_SIZE = 500  # Total videos per batch
+IDS_PER_REQUEST = 50  # YouTube API limit
+WAIT_TIME = 2  # Seconds between API calls
+OUTPUT_FILE = 'scripts/data/youtube/youtube_data_processed.json'
+ERROR_FILE = 'scripts/data/youtube/youtube_data_errors.json'
 
-# File paths
-DATA_DIR = Path('scripts/data')
-YOUTUBE_DIR = DATA_DIR / 'youtube'
-PROCESSED_DATA_FILE = YOUTUBE_DIR / 'youtube_data_processed.json'
-ERROR_DATA_FILE = YOUTUBE_DIR / 'youtube_data_errors.json'
-
-# Ensure directories exist
-YOUTUBE_DIR.mkdir(parents=True, exist_ok=True)
-
-# Load environment and initialize clients
-load_dotenv()
-youtube = build('youtube', 'v3', developerKey=os.getenv('YOUTUBE_API_KEY'))
-conn = psycopg2.connect(os.getenv('DATABASE_URL'))
-cur = conn.cursor(cursor_factory=RealDictCursor)
-
-def fetch_videos_needing_update():
-    cur.execute("""
-        SELECT video_id, title, channel_id 
-        FROM videos
-        WHERE metadata_updated_at IS NULL 
-        LIMIT %s
-    """, (MAX_VIDEOS_PER_REQUEST,))
-    return cur.fetchall()
-
-def extract_useful_data(video_item):
-    if video_item['kind'] != 'youtube#video':
-        return None
-    
-    snippet = video_item['snippet']
-    content_details = video_item['contentDetails']
-    statistics = video_item.get('statistics', {})
-    status = video_item.get('status', {})
-    
-    return {
-        'videoId': video_item['id'],
-        'title': snippet['title'],
-        'description': snippet.get('description'),
-        'thumbnailUrl': snippet.get('thumbnails', {}).get('maxres', {}).get('url'),
-        'tags': snippet.get('tags', []),
-        'categoryId': snippet.get('categoryId'),
-        'audioLanguage': snippet.get('defaultAudioLanguage'),
-        'duration': content_details['duration'],
-        'licensedContent': content_details.get('licensedContent'),
-        'channelId': snippet['channelId'],
-        'channelTitle': snippet['channelTitle'],
-        'publishedAt': snippet['publishedAt'],
-        
-        # Statistics
-        'viewCount': int(statistics.get('viewCount', 0)) if statistics.get('viewCount') else None,
-        'likeCount': int(statistics.get('likeCount', 0)) if statistics.get('likeCount') else None,
-        'commentCount': int(statistics.get('commentCount', 0)) if statistics.get('commentCount') else None,
-        
-        # Status
-        'privacyStatus': status.get('privacyStatus'),
-        'license': status.get('license'),
-        'embeddable': status.get('embeddable'),
-        
-        # Topic Details
-        'topicCategories': video_item.get('topicDetails', {}).get('topicCategories', []),
-        
-        # Recording Details
-        'recordingDate': video_item.get('recordingDetails', {}).get('recordingDate'),
-        'recordingLocation': video_item.get('recordingDetails', {}).get('location'),
-
-        # Live Streaming Details
-        'wasLivestream': bool(video_item.get('liveStreamingDetails')),
-        'actualStartTime': video_item.get('liveStreamingDetails', {}).get('actualStartTime'),
-        'actualEndTime': video_item.get('liveStreamingDetails', {}).get('actualEndTime'),
-
-        # Paid Product Placement
-        'hasPaidProductPlacement': video_item.get('paidProductPlacementDetails', {}).get('hasPaidProductPlacement'),
-        
-        'metadataUpdatedAt': datetime.utcnow().isoformat()
-    }
-
-def fetch_youtube_data(videos):
-    youtube_data = []
-    errors = []
-    
-    video_ids = [v['video_id'] for v in videos]
-    logger.info(f"Fetching data for {len(video_ids)} videos")
-    
+def get_video_ids() -> List[str]:
+    """Get all video IDs from the database that need updating."""
     try:
-        response = youtube.videos().list(
-            part='snippet,contentDetails,statistics,status,topicDetails,recordingDetails,'
-                 'liveStreamingDetails,paidProductPlacementDetails',
-            id=','.join(video_ids)
-        ).execute()
+        conn = psycopg2.connect(
+            dbname=os.getenv('POSTGRES_DB', 'codex_dev'),
+            user=os.getenv('POSTGRES_USER', 'kevinnorth'),
+            password=os.getenv('POSTGRES_PASSWORD', ''),
+            host=os.getenv('POSTGRES_HOST', 'localhost')
+        )
         
-        for item in response.get('items', []):
-            if processed := extract_useful_data(item):
-                youtube_data.append(processed)
-            else:
-                errors.append({
-                    'video_id': item['id'],
-                    'error': 'Invalid video data format'
-                })
-                
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            # Get videos that:
+            # 1. Haven't been updated in the last week
+            # 2. Or have never been updated
+            cur.execute("""
+                SELECT video_id 
+                FROM videos 
+                WHERE metadata_updated_at IS NULL 
+                   OR metadata_updated_at < %s
+                ORDER BY metadata_updated_at ASC NULLS FIRST
+            """, [datetime.utcnow() - timedelta(days=7)])
+            
+            results = cur.fetchall()
+            return [row['video_id'] for row in results]
+            
     except Exception as e:
-        errors.append({
-            'video_ids': video_ids,
-            'error': str(e)
-        })
+        print(f"Database error: {e}")
+        raise
+    finally:
+        if conn:
+            conn.close()
+
+def fetch_video_batch(video_ids: List[str]) -> List[Dict[Any, Any]]:
+    """Fetch metadata for a batch of videos."""
+    results = []
     
-    if errors:
-        with open(ERROR_DATA_FILE, 'w') as f:
-            json.dump(errors, f, indent=2)
+    # Split into smaller chunks for API
+    for i in range(0, len(video_ids), IDS_PER_REQUEST):
+        chunk = video_ids[i:i + IDS_PER_REQUEST]
         
-    return youtube_data
+        try:
+            response = youtube.videos().list(
+                part='snippet,contentDetails,statistics,status,topicDetails,recordingDetails,liveStreamingDetails',
+                id=','.join(chunk)
+            ).execute()
+            
+            # Process each video
+            for item in response.get('items', []):
+                video_data = {
+                    'videoId': item['id'],
+                    'title': item['snippet']['title'],
+                    'description': item['snippet']['description'],
+                    'thumbnailUrl': item['snippet'].get('thumbnails', {}).get('maxres', {}).get('url'),
+                    'tags': item['snippet'].get('tags', []),
+                    'categoryId': item['snippet'].get('categoryId'),
+                    'audioLanguage': item['snippet'].get('defaultAudioLanguage'),
+                    'duration': item['contentDetails']['duration'],
+                    'licensedContent': item['contentDetails'].get('licensedContent'),
+                    'viewCount': int(item['statistics'].get('viewCount', 0)),
+                    'likeCount': int(item['statistics'].get('likeCount', 0)),
+                    'commentCount': int(item['statistics'].get('commentCount', 0)),
+                    'channelId': item['snippet']['channelId'],
+                    'channelTitle': item['snippet']['channelTitle'],
+                    'publishedAt': item['snippet']['publishedAt'],
+                    
+                    # Status details
+                    'privacyStatus': item['status']['privacyStatus'],
+                    'license': item['status'].get('license'),
+                    'embeddable': item['status'].get('embeddable'),
+                    
+                    # Topic details
+                    'topicCategories': item.get('topicDetails', {}).get('topicCategories', []),
+                    
+                    # Recording details
+                    'recordingDate': item.get('recordingDetails', {}).get('recordingDate'),
+                    'recordingLocation': item.get('recordingDetails', {}).get('location'),
+                    
+                    # Live streaming details
+                    'wasLivestream': bool(item.get('liveStreamingDetails')),
+                    'actualStartTime': item.get('liveStreamingDetails', {}).get('actualStartTime'),
+                    'actualEndTime': item.get('liveStreamingDetails', {}).get('actualEndTime'),
+                    
+                    # Product placement
+                    'hasPaidProductPlacement': item['contentDetails'].get('hasCustomThumbnail', False),
+                    
+                    # Update timestamp
+                    'metadataUpdatedAt': datetime.utcnow().isoformat()
+                }
+                results.append(video_data)
+            
+            print(f"Fetched {len(chunk)} videos successfully")
+            time.sleep(WAIT_TIME)  # Be nice to the API
+            
+        except HttpError as e:
+            print(f"Error fetching videos: {e}")
+            with open(ERROR_FILE, 'w') as f:
+                json.dump({
+                    'error': str(e),
+                    'failed_ids': chunk,
+                    'timestamp': datetime.utcnow().isoformat()
+                }, f, indent=2)
+            raise  # Exit early on API errors
+    
+    return results
 
 def main():
-    videos = fetch_videos_needing_update()
-    youtube_data = fetch_youtube_data(videos)
+    video_ids = get_video_ids()
+    print(f"Found {len(video_ids)} videos to process")
     
-    with open(PROCESSED_DATA_FILE, 'w') as f:
-        json.dump(youtube_data, f, indent=2)
-    
-    logger.info(f"Processed {len(youtube_data)} videos")
-    if os.path.exists(ERROR_DATA_FILE):
-        with open(ERROR_DATA_FILE) as f:
-            errors = json.load(f)
-            if errors:
-                logger.warning(f"Encountered {len(errors)} errors")
+    # Process in batches
+    for i in range(0, len(video_ids), BATCH_SIZE):
+        batch = video_ids[i:i + BATCH_SIZE]
+        results = fetch_video_batch(batch)
+        
+        # Append results to file
+        mode = 'w' if i == 0 else 'a'
+        with open(OUTPUT_FILE, mode) as f:
+            if i == 0:  # Start array
+                f.write('[\n')
+            for j, result in enumerate(results):
+                json.dump(result, f, indent=2)
+                if i + j < len(video_ids) - 1:  # Not last item
+                    f.write(',\n')
+            if i + BATCH_SIZE >= len(video_ids):  # End array
+                f.write('\n]')
+        
+        print(f"Processed batch {i//BATCH_SIZE + 1} of {(len(video_ids) + BATCH_SIZE - 1)//BATCH_SIZE}")
 
 if __name__ == '__main__':
     main()
-    cur.close()
-    conn.close()
