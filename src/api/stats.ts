@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express'
-import { PrismaClient, Video, WatchHistory } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import cors from 'cors'
 
 const prisma = new PrismaClient()
@@ -72,7 +72,7 @@ router.get('/stats', async (_req: Request, res: Response) => {
                 orderBy: {
                     watchedAt: 'asc'
                 }
-            }).then(results => {
+            }).then((results: any[]) => {
                 const yearCounts = results.reduce((acc, curr) => {
                     const year = new Date(curr.watchedAt).getFullYear()
                     acc[year] = (acc[year] || 0) + curr._count

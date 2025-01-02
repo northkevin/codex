@@ -28,18 +28,48 @@ model Podcast {
 }
 
 model Video {
-  id           Int           @id @default(autoincrement())
-  videoId      String        @unique @map("video_id") // YouTube's video ID
-  title        String
-  channelId    String?       @map("channel_id")
-  channelTitle String?       @map("channel_title")
-  publishedAt  DateTime?     @map("published_at")
-  description  String?       @db.Text
-  duration     Int?          // Duration in seconds
-  viewCount    Int?          @map("view_count")
-  createdAt    DateTime      @default(now()) @map("created_at")
-  updatedAt    DateTime      @updatedAt @map("updated_at")
-  watches      WatchHistory[]
+  id                Int       @id @default(autoincrement())
+  videoId           String    @unique @map("video_id")
+  title             String
+  description       String?   @db.Text
+  thumbnailUrl      String?   @map("thumbnail_url")
+  tags              String[]
+  categoryId        String?   @map("category_id")
+  audioLanguage     String?   @map("audio_language")
+  duration          String?
+  licensedContent   Boolean?  @map("licensed_content")
+  viewCount         BigInt?   @map("view_count")
+  likeCount         BigInt?   @map("like_count")
+  commentCount      BigInt?   @map("comment_count")
+  channelId         String?   @map("channel_id")
+  channelTitle      String?   @map("channel_title")
+  publishedAt       DateTime? @map("published_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  metadataUpdatedAt DateTime? @map("metadata_updated_at")
+
+  // Paid Product Placement
+  hasPaidProductPlacement Boolean? @map("has_paid_product_placement")
+
+  // Status details
+  privacyStatus String?  @map("privacy_status")
+  license       String?
+  embeddable    Boolean?
+
+  // Topic details
+  topicCategories String[] @map("topic_categories")
+
+  // Recording details
+  recordingDate     DateTime? @map("recording_date")
+  recordingLocation Json?     @map("recording_location")
+
+  // Live streaming details
+  wasLivestream   Boolean?  @map("was_livestream")
+  actualStartTime DateTime? @map("actual_start_time")
+  actualEndTime   DateTime? @map("actual_end_time")
+
+  // Relations
+  watches WatchHistory[]
 
   @@map("videos")
 }
@@ -50,7 +80,7 @@ model WatchHistory {
   watchedAt DateTime @map("watched_at")
   video     Video    @relation(fields: [videoId], references: [videoId])
 
-  @@map("watch_history")
   @@index([videoId])
   @@index([watchedAt])
+  @@map("watch_history")
 }

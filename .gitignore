@@ -4,12 +4,15 @@ dist/
 *.log
 .DS_Store
 youtube_history.json
+*.sql
 
 watch-history-sample.html
 watch-history-test-*.html
 
 scripts/*.html
 scripts/*.json
+scripts/**/*.json
+
 __pycache__/
 .pytest_cache/
 
