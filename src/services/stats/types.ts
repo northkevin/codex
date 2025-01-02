@@ -9,20 +9,19 @@ export interface BasicStats {
 
 export interface ChannelStats {
     topByCount: {
-        channelTitle: string
+        channelTitle: string | null
         _count: {
             videoId: number
         }
     }[]
     topByDuration: {
-        channelTitle: string
-        _sum: {
-            duration: string | null
-        }
+        channelTitle: string | null
+        totalDuration: string
+        watchCount: number
     }[]
     topByCategory: {
-        channelTitle: string
-        categoryId: string
+        channelTitle: string | null
+        categoryId: string | null
         _count: number
     }[]
 }
@@ -41,11 +40,11 @@ export interface TimeStats {
 
 export interface CategoryStats {
     categoryDistribution: {
-        categoryId: string
+        categoryId: string | null
         _count: number
     }[]
     podcastStats: {
-        categoryId: string
+        categoryId: string | null
         _count: number
     }[]
 }

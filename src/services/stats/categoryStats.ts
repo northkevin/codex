@@ -11,9 +11,10 @@ export async function getCategoryStats(
             by: ['categoryId'],
             _count: true,
             where: {
+                categoryId: { not: null },
                 watches: { some: { watchedAt: { gte: minDate } } },
             },
-            orderBy: { _count: 'desc' },
+            orderBy: { _count: { categoryId: 'desc' } },
         }),
 
         // Podcast-like content stats (long-form content)
@@ -21,8 +22,9 @@ export async function getCategoryStats(
             by: ['categoryId'],
             _count: true,
             where: {
+                categoryId: { not: null },
                 watches: { some: { watchedAt: { gte: minDate } } },
-                duration: { gt: 1200 }, // > 20 minutes
+                duration: { gt: 'PT1200S' }, // > 20 minutes
                 OR: [
                     { categoryId: '22' }, // People & Blogs
                     { categoryId: '24' }, // Entertainment
