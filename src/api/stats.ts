@@ -7,6 +7,8 @@ const router = express.Router()
 
 router.get('/stats', async (_req: Request, res: Response) => {
     try {
+        const minDate = new Date('2017-01-01')
+
         const [
             totalVideos,
             uniqueChannels,
@@ -14,15 +16,43 @@ router.get('/stats', async (_req: Request, res: Response) => {
             watchesByYear,
             dateRange
         ] = await Promise.all([
-            prisma.video.count(),
+            prisma.video.count({
+                where: {
+                    watches: {
+                        some: {
+                            watchedAt: {
+                                gte: minDate
+                            }
+                        }
+                    }
+                }
+            }),
             prisma.video.groupBy({
                 by: ['channelId'],
-                _count: true
+                _count: true,
+                where: {
+                    watches: {
+                        some: {
+                            watchedAt: {
+                                gte: minDate
+                            }
+                        }
+                    }
+                }
             }),
             prisma.video.groupBy({
                 by: ['channelTitle'],
                 _count: {
                     videoId: true
+                },
+                where: {
+                    watches: {
+                        some: {
+                            watchedAt: {
+                                gte: minDate
+                            }
+                        }
+                    }
                 },
                 orderBy: {
                     _count: {
@@ -34,6 +64,11 @@ router.get('/stats', async (_req: Request, res: Response) => {
             prisma.watchHistory.groupBy({
                 by: ['watchedAt'],
                 _count: true,
+                where: {
+                    watchedAt: {
+                        gte: minDate
+                    }
+                },
                 orderBy: {
                     watchedAt: 'asc'
                 }
@@ -55,6 +90,11 @@ router.get('/stats', async (_req: Request, res: Response) => {
                 },
                 _max: {
                     watchedAt: true
+                },
+                where: {
+                    watchedAt: {
+                        gte: minDate
+                    }
                 }
             })
         ])
@@ -75,4 +115,4 @@ router.get('/stats', async (_req: Request, res: Response) => {
     }
 })
 
-export default router 
+export default router
