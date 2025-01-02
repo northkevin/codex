@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express'
-import { PrismaClient, Prisma } from '@prisma/client'
+import { PrismaClient, Video, WatchHistory } from '@prisma/client'
 import cors from 'cors'
 
 const prisma = new PrismaClient()
