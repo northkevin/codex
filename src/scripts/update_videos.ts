@@ -1,8 +1,9 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma.js'
 import fs from 'fs'
 import path from 'path'
+import { dirname } from 'path'
 
-const prisma = new PrismaClient()
+const __dirname = dirname(new URL(import.meta.url).pathname)
 
 // Configure path to JSON file relative to this script
 const YOUTUBE_DATA_PATH = path.resolve(
@@ -31,10 +32,40 @@ async function updateVideos() {
                         title: video.title,
                         description: video.description,
                         thumbnailUrl: video.thumbnailUrl,
+                        tags: video.tags || [],
                         categoryId: video.categoryId,
                         audioLanguage: video.audioLanguage,
                         duration: video.duration,
-                        tags: video.tags || []
+                        licensedContent: video.licensedContent,
+                        viewCount: video.viewCount ? BigInt(video.viewCount) : null,
+                        likeCount: video.likeCount ? BigInt(video.likeCount) : null,
+                        commentCount: video.commentCount ? BigInt(video.commentCount) : null,
+                        channelId: video.channelId,
+                        channelTitle: video.channelTitle,
+                        publishedAt: video.publishedAt ? new Date(video.publishedAt) : null,
+
+                        // Status details
+                        privacyStatus: video.privacyStatus,
+                        license: video.license,
+                        embeddable: video.embeddable,
+
+                        // Topic details
+                        topicCategories: video.topicCategories || [],
+
+                        // Recording details
+                        recordingDate: video.recordingDate ? new Date(video.recordingDate) : null,
+                        recordingLocation: video.recordingLocation,
+
+                        // Live streaming details
+                        wasLivestream: video.wasLivestream,
+                        actualStartTime: video.actualStartTime ? new Date(video.actualStartTime) : null,
+                        actualEndTime: video.actualEndTime ? new Date(video.actualEndTime) : null,
+
+                        // Product placement
+                        hasPaidProductPlacement: video.hasPaidProductPlacement,
+
+                        // Update timestamp
+                        metadataUpdatedAt: new Date()
                     }
                 })
                 updated++

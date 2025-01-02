@@ -1,7 +1,6 @@
 {
   "name": "codex",
   "version": "1.0.0",
-  "type": "module",
   "description": "A digital library for podcast knowledge and analysis",
   "main": "dist/index.js",
   "scripts": {
@@ -15,7 +14,7 @@
     "frontend": "cd frontend && pnpm dev",
     "frontend:build": "cd frontend && pnpm build",
     "postinstall": "prisma generate",
-    "update-videos": "tsx src/scripts/update_videos.ts",
+    "update-videos": "NODE_ENV=development tsx src/scripts/update_videos.ts",
     "backup-data": "tsx src/scripts/backup_data.ts"
   },
   "keywords": [],
