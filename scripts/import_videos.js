@@ -1,3 +1,22 @@
+/**
+ * Import script for YouTube watch history
+ * 
+ * Prerequisites:
+ * 1. Download watch history HTML file from Google Takeout
+ * 2. Run parse_youtube.py on the HTML file to generate watch-history.json
+ * 3. Run this script to import the JSON data into postgres
+ * 
+ * Database Design:
+ * - videos table: Stores unique videos (by videoId) with their metadata
+ *   This prevents duplicate video entries when the same video is watched multiple times
+ * 
+ * - watch_history table: Records each time a video was watched
+ *   Multiple entries can exist for the same video with different timestamps
+ *   This preserves the actual watch history from the JSON file
+ * 
+ * Usage: node import_videos.js
+ */
+
 const { PrismaClient } = require('@prisma/client')
 const fs = require('fs')
 
