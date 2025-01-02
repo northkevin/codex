@@ -15,7 +15,11 @@
     "frontend:build": "cd frontend && pnpm build",
     "postinstall": "prisma generate",
     "update-videos": "NODE_ENV=development tsx src/scripts/update_videos.ts",
-    "backup-data": "tsx src/scripts/backup_data.ts"
+    "backup-data": "tsx src/scripts/backup_data.ts",
+    "prepare": "husky install",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\""
   },
   "keywords": [],
   "author": "",
@@ -23,7 +27,13 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/node": "^22.10.3",
+    "@typescript-eslint/eslint-plugin": "^8.19.0",
+    "@typescript-eslint/parser": "^8.19.0",
+    "eslint": "^9.17.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.3.0",
     "nodemon": "^3.1.9",
+    "prettier": "^3.4.2",
     "prisma": "^6.1.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
