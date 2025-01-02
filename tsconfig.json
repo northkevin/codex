@@ -1,12 +1,9 @@
 {
     "compilerOptions": {
         "target": "es2022",
-        "module": "commonjs",
+        "module": "ESNext",
         "lib": [
-            "es2022",
-            "dom",
-            "dom.iterable",
-            "esnext"
+            "es2022"
         ],
         "strict": true,
         "esModuleInterop": true,
@@ -14,24 +11,14 @@
         "forceConsistentCasingInFileNames": true,
         "outDir": "./dist",
         "rootDir": "./src",
-        "moduleResolution": "node",
-        "typeRoots": [
-            "./node_modules/@types",
-            "./node_modules/.prisma/client"
-        ],
-        "types": [
-            "node"
-        ],
-        "paths": {
-            "@prisma/client": [
-                "./node_modules/.prisma/client"
-            ]
-        }
+        "moduleResolution": "bundler",
+        "resolveJsonModule": true
     },
     "include": [
         "src/**/*"
     ],
     "exclude": [
-        "node_modules"
+        "node_modules",
+        "dist"
     ]
 }

@@ -1,6 +1,6 @@
 import express from 'express'
 import cors from 'cors'
-import statsRouter from './api/stats'
+import statsRouter from './api/stats.js'
 
 const app = express()
 const port = process.env.PORT || 3001
