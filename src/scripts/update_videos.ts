@@ -1,3 +1,25 @@
+/**
+ * YouTube Metadata Update Script
+ *
+ * Updates video records in the database with metadata from YouTube Data API
+ *
+ * Input: scripts/scripts/data/youtube/youtube_data_processed.json
+ * Format: Array of video metadata objects with fields matching our Prisma schema
+ *
+ * Run commands:
+ * 1. Make sure Prisma client is generated:
+ *    pnpm prisma generate
+ *
+ * 2. Run the update script:
+ *    pnpm update-videos
+ *
+ * The script will:
+ * - Process all videos in batches
+ * - Update metadata fields
+ * - Skip videos not found in DB
+ * - Log any errors to update_errors_{timestamp}.json
+ */
+
 import { prisma } from '../lib/prisma.js'
 import fs from 'fs'
 import path from 'path'
@@ -26,7 +48,7 @@ async function updateVideos() {
                 // Update video with new metadata
                 await prisma.video.update({
                     where: {
-                        videoId: video.videoId
+                        videoId: video.videoId,
                     },
                     data: {
                         title: video.title,
@@ -37,12 +59,20 @@ async function updateVideos() {
                         audioLanguage: video.audioLanguage,
                         duration: video.duration,
                         licensedContent: video.licensedContent,
-                        viewCount: video.viewCount ? BigInt(video.viewCount) : null,
-                        likeCount: video.likeCount ? BigInt(video.likeCount) : null,
-                        commentCount: video.commentCount ? BigInt(video.commentCount) : null,
+                        viewCount: video.viewCount
+                            ? BigInt(video.viewCount)
+                            : null,
+                        likeCount: video.likeCount
+                            ? BigInt(video.likeCount)
+                            : null,
+                        commentCount: video.commentCount
+                            ? BigInt(video.commentCount)
+                            : null,
                         channelId: video.channelId,
                         channelTitle: video.channelTitle,
-                        publishedAt: video.publishedAt ? new Date(video.publishedAt) : null,
+                        publishedAt: video.publishedAt
+                            ? new Date(video.publishedAt)
+                            : null,
 
                         // Status details
                         privacyStatus: video.privacyStatus,
@@ -53,20 +83,26 @@ async function updateVideos() {
                         topicCategories: video.topicCategories || [],
 
                         // Recording details
-                        recordingDate: video.recordingDate ? new Date(video.recordingDate) : null,
+                        recordingDate: video.recordingDate
+                            ? new Date(video.recordingDate)
+                            : null,
                         recordingLocation: video.recordingLocation,
 
                         // Live streaming details
                         wasLivestream: video.wasLivestream,
-                        actualStartTime: video.actualStartTime ? new Date(video.actualStartTime) : null,
-                        actualEndTime: video.actualEndTime ? new Date(video.actualEndTime) : null,
+                        actualStartTime: video.actualStartTime
+                            ? new Date(video.actualStartTime)
+                            : null,
+                        actualEndTime: video.actualEndTime
+                            ? new Date(video.actualEndTime)
+                            : null,
 
                         // Product placement
                         hasPaidProductPlacement: video.hasPaidProductPlacement,
 
                         // Update timestamp
-                        metadataUpdatedAt: new Date()
-                    }
+                        metadataUpdatedAt: new Date(),
+                    },
                 })
                 updated++
 
@@ -74,12 +110,13 @@ async function updateVideos() {
                     console.log(`Updated ${updated} videos...`)
                 }
             } catch (error: any) {
-                if (error.code === 'P2025') { // Record not found
+                if (error.code === 'P2025') {
+                    // Record not found
                     skipped++
                 } else {
                     errors.push({
                         videoId: video.videoId,
-                        error: error.message
+                        error: error.message,
                     })
                 }
             }
@@ -91,11 +128,13 @@ async function updateVideos() {
         console.log(`Errors: ${errors.length}`)
 
         if (errors.length > 0) {
-            const errorLog = path.resolve(__dirname, `update_errors_${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
+            const errorLog = path.resolve(
+                __dirname,
+                `update_errors_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+            )
             fs.writeFileSync(errorLog, JSON.stringify(errors, null, 2))
             console.log(`Error details written to: ${errorLog}`)
         }
-
     } catch (error) {
         console.error('Fatal error:', error)
         process.exit(1)
