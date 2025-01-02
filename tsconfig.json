@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
-        "target": "es2022",
-        "module": "ESNext",
-        "moduleResolution": "bundler",
+        "target": "ES2020",
+        "module": "NodeNext",
+        "moduleResolution": "NodeNext",
         "lib": [
             "es2022"
         ],
@@ -11,7 +11,7 @@
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "outDir": "./dist",
-        "rootDir": "./src",
+        "rootDir": ".",
         "resolveJsonModule": true
     },
     "include": [

@@ -23,9 +23,6 @@
 import { prisma } from '../lib/prisma.js'
 import fs from 'fs'
 import path from 'path'
-import { dirname } from 'path'
-
-const __dirname = dirname(new URL(import.meta.url).pathname)
 
 // Configure path to JSON file relative to this script
 const YOUTUBE_DATA_PATH = path.resolve(

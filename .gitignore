@@ -24,3 +24,5 @@ frontend/dist/
 frontend/node_modules/
 
 .vscode/
+
+.make/
