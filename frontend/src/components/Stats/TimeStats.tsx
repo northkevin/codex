@@ -1,4 +1,3 @@
-import { format } from 'date-fns'
 import type { TimeStats as TimeStatsType } from '../../types'
 
 interface Props {

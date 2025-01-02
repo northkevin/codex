@@ -18,7 +18,7 @@ export function CategoryStats({ data }: Props) {
                 {data.categoryDistribution.map(cat => (
                     <div key={cat.categoryId} className="category-item">
                         <span className="category">
-                            {CATEGORY_NAMES[cat.categoryId] || cat.categoryId}
+                            {CATEGORY_NAMES[cat.categoryId || ''] || cat.categoryId}
                         </span>
                         <div
                             className="bar"

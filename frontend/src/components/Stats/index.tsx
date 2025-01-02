@@ -3,6 +3,7 @@ import { BasicStats } from './BasicStats'
 import { ChannelStats } from './ChannelStats'
 import { TimeStats } from './TimeStats'
 import { CategoryStats } from './CategoryStats'
+import './Stats.css'
 
 export function Stats() {
     const { data: stats, isLoading, error } = useStats()

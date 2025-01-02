@@ -1,3 +1,4 @@
+import { formatDistance, format } from 'date-fns'
 export function formatDuration(iso8601Duration: string | null) {
     if (!iso8601Duration) return 'unknown'
 
@@ -15,4 +16,14 @@ export function formatDuration(iso8601Duration: string | null) {
     ]
         .filter(Boolean)
         .join(' ')
+}
+
+export function formatTimeSpan(start: Date | null, end: Date | null): string {
+    if (!start || !end) return 'N/A'
+    return formatDistance(new Date(start), new Date(end))
+}
+
+export function formatDateRange(start: Date | null, end: Date | null): string {
+    if (!start || !end) return ''
+    return `${format(new Date(start), 'MMM yyyy')} - ${format(new Date(end), 'MMM yyyy')}`
 }

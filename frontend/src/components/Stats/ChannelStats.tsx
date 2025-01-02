@@ -1,4 +1,5 @@
 import type { ChannelStats as ChannelStatsType } from '../../types'
+import { formatDuration } from '../../utils/format'
 
 interface Props {
     data: ChannelStatsType
@@ -30,7 +31,7 @@ export function ChannelStats({ data }: Props) {
                             <span className="rank">#{i + 1}</span>
                             <span className="channel">{channel.channelTitle}</span>
                             <span className="duration">
-                                {formatDuration(channel._sum.duration)}
+                                {formatDuration(channel.totalDuration)} ({channel.watchCount} watches)
                             </span>
                         </div>
                     ))}
