@@ -1,0 +1,32 @@
+.error-fallback {
+    padding: var(--spacing-lg);
+    margin: var(--spacing-lg);
+    background: var(--background-secondary);
+    border-radius: var(--border-radius);
+    border: 1px solid var(--error);
+    text-align: center;
+}
+
+.error-message {
+    margin: var(--spacing-md) 0;
+    padding: var(--spacing-md);
+    background: var(--background-primary);
+    border-radius: var(--border-radius);
+    color: var(--error);
+    font-family: monospace;
+    white-space: pre-wrap;
+}
+
+.retry-button {
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.retry-button:hover {
+    opacity: 0.9;
+}

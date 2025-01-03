@@ -1,0 +1,52 @@
+.analytics-container {
+    padding: var(--spacing-lg);
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.word-map-section {
+    background: var(--background-secondary);
+    border-radius: var(--border-radius);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.word-map {
+    width: 100%;
+    height: 400px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .word-map text {
+        fill: var(--text-primary) !important;
+    }
+}
+
+.wordcloud {
+    display: flex;
+    flex-direction: column;
+    user-select: none;
+    width: 100%;
+    height: 100%;
+}
+
+.controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+.controls label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}

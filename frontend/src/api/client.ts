@@ -74,3 +74,24 @@ export const explorerApi = {
         return response.json()
     },
 }
+
+export const analyticsApi = {
+    getWordMaps: async () => {
+        const response = await fetch(
+            `${API_URL}${API_BASE}/analytics/word-maps`
+        )
+        if (!response.ok) {
+            throw new Error('Failed to fetch word maps')
+        }
+        return response.json()
+    },
+    getContentInsights: async () => {
+        const response = await fetch(
+            `${API_URL}${API_BASE}/analytics/content-insights`
+        )
+        if (!response.ok) {
+            throw new Error('Failed to fetch content insights')
+        }
+        return response.json()
+    },
+}
