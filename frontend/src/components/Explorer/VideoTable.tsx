@@ -61,6 +61,8 @@ interface Props {
     onPageSizeChange: (pageSize: number) => void
     onSearch: (search: string) => void
     onGlobalFilterChange: (filter: string) => void
+    sorting: SortingState
+    onSortingChange: (sorting: SortingState) => void
 }
 
 export function VideoTable({
@@ -73,9 +75,26 @@ export function VideoTable({
     onPageSizeChange,
     // onSearch,
     onGlobalFilterChange,
+    sorting,
+    onSortingChange,
 }: Props) {
-    const [sorting, setSorting] = useState<SortingState>([])
     const [pageInput, setPageInput] = useState('')
+
+    const handleSortingChange = (updaterOrValue) => {
+        const newSorting = typeof updaterOrValue === 'function'
+            ? updaterOrValue(sorting)
+            : updaterOrValue;
+
+        // Convert to tri-state sorting
+        const triStateSorting = newSorting.map(sort => {
+            const currentSort = sorting.find(s => s.id === sort.id);
+            if (!currentSort) return { ...sort, desc: false }; // First click: ascending
+            if (!currentSort.desc) return { ...sort, desc: true }; // Second click: descending
+            return null; // Third click: no sorting
+        }).filter(Boolean);
+
+        onSortingChange(triStateSorting);
+    }
 
     const table = useReactTable({
         data,
@@ -88,14 +107,16 @@ export function VideoTable({
                 pageIndex: page,
             },
         },
-        onSortingChange: setSorting,
+        onSortingChange: handleSortingChange,
         onGlobalFilterChange: onGlobalFilterChange,
+        manualSorting: true,
+        manualPagination: true,
+        pageCount: meta.pageCount,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
-        manualPagination: true,
-        pageCount: meta.pageCount,
+        enableSortingRemoval: true,
     })
 
     const handleJumpToPage = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -147,16 +168,20 @@ export function VideoTable({
                                     <th
                                         key={header.id}
                                         onClick={header.column.getToggleSortingHandler()}
-                                        className={
-                                            header.column.getCanSort()
-                                                ? 'sortable'
-                                                : ''
-                                        }
+                                        className="p-3 text-left bg-gray-100 cursor-pointer"
                                     >
-                                        {flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
-                                        )}
+                                        <div className="flex items-center gap-2">
+                                            {flexRender(
+                                                header.column.columnDef.header,
+                                                header.getContext()
+                                            )}
+                                            {header.column.getIsSorted() && (
+                                                <span className="text-gray-600">
+                                                    {header.column.getIsSorted() === "asc" ? "↑" :
+                                                     header.column.getIsSorted() === "desc" ? "↓" : ""}
+                                                </span>
+                                            )}
+                                        </div>
                                     </th>
                                 ))}
                             </tr>

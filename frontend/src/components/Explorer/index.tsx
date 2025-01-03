@@ -3,16 +3,23 @@ import { explorerApi } from '../../api/client'
 import { VideoTable } from './VideoTable'
 import './Explorer.css'
 import { useState } from 'react'
+import { SortingState } from '@tanstack/react-table'
 
 export function Explorer() {
     const [page, setPage] = useState(0)
     const [pageSize, setPageSize] = useState(25)
     const [search, setSearch] = useState('')
     const [globalFilter, setGlobalFilter] = useState('')
+    const [sorting, setSorting] = useState<SortingState>([])
 
     const { data, isLoading, error } = useQuery({
-        queryKey: ['videos', page, pageSize, search],
-        queryFn: () => explorerApi.getVideos(page, pageSize, search || globalFilter),
+        queryKey: ['videos', page, pageSize, search, sorting],
+        queryFn: () => explorerApi.getVideos(
+            page,
+            pageSize,
+            search || globalFilter,
+            sorting.length ? sorting : undefined
+        ),
     })
 
     // Handlers for state changes
@@ -45,6 +52,8 @@ export function Explorer() {
                 meta={data.meta}
                 page={page}
                 pageSize={pageSize}
+                sorting={sorting}
+                onSortingChange={setSorting}
                 onPageChange={handlePageChange}
                 onPageSizeChange={handlePageSizeChange}
                 onSearch={handleSearch}

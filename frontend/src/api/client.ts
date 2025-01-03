@@ -56,12 +56,14 @@ export const explorerApi = {
     getVideos: async (
         page: number = 0,
         pageSize: number = 25,
-        search?: string
+        search?: string,
+        sortBy?: { id: string; desc: boolean }[]
     ): Promise<PaginatedResponse<VideoData>> => {
         const url = new URL(`${API_URL}${API_BASE}/explorer`)
         url.searchParams.set('page', page.toString())
         url.searchParams.set('pageSize', pageSize.toString())
         if (search) url.searchParams.set('search', search)
+        if (sortBy) url.searchParams.set('sortBy', JSON.stringify(sortBy))
 
         console.log('Fetching videos from:', url.toString())
 
