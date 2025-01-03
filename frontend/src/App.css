@@ -102,3 +102,27 @@ body {
         max-width: none;
     }
 }
+
+/* Add to existing styles */
+.nav-header {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--background-secondary);
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.nav-header a {
+    color: var(--text-primary);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+}
+
+.nav-header a:hover {
+    background: var(--background-primary);
+}
+
+.explorer-container {
+    padding: 2rem;
+}
