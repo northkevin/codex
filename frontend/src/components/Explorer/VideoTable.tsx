@@ -7,11 +7,13 @@ import {
     createColumnHelper,
     flexRender,
     type SortingState,
+    type VisibilityState,
 } from '@tanstack/react-table'
 import { useState } from 'react'
 import type { VideoData } from '../../types/explorer'
 import { formatDuration } from '../../utils/format'
 import { CATEGORY_NAMES } from '../../constants'
+import { ColumnSelector } from './ColumnSelector'
 
 const columnHelper = createColumnHelper<VideoData>()
 
@@ -24,25 +26,37 @@ const columns = [
         header: 'Channel',
         cell: (info) => info.getValue() || 'Unknown',
     }),
-    columnHelper.accessor('categoryId', {
-        header: 'Category',
-        cell: (info) => CATEGORY_NAMES[info.getValue() || ''] || 'Unknown',
-    }),
     columnHelper.accessor('viewCount', {
         header: 'Views',
         cell: (info) => Number(info.getValue()).toLocaleString(),
     }),
-    columnHelper.accessor('duration', {
-        header: 'Duration',
-        cell: (info) => formatDuration(info.getValue() || ''),
+    columnHelper.accessor('likeCount', {
+        header: 'Likes',
+        cell: (info) => Number(info.getValue()).toLocaleString(),
+    }),
+    columnHelper.accessor('commentCount', {
+        header: 'Comments',
+        cell: (info) => Number(info.getValue()).toLocaleString(),
     }),
     columnHelper.accessor('watches', {
         header: 'Watch Count',
         cell: (info) => info.getValue().length.toLocaleString(),
     }),
+    columnHelper.accessor('duration', {
+        header: 'Duration',
+        cell: (info) => formatDuration(info.getValue() || ''),
+    }),
+    columnHelper.accessor('categoryId', {
+        header: 'Category',
+        cell: (info) => CATEGORY_NAMES[info.getValue() || ''] || 'Unknown',
+    }),
     columnHelper.accessor('wasLivestream', {
-        header: 'Type',
-        cell: (info) => (info.getValue() ? '🔴 Live' : '📹 Video'),
+        header: 'Live',
+        cell: (info) => (info.getValue() ? '🔴' : ''),
+    }),
+    columnHelper.accessor('licensedContent', {
+        header: 'Licensed',
+        cell: (info) => (info.getValue() ? '©️' : ''),
     }),
 ]
 
@@ -78,6 +92,7 @@ export function VideoTable({
     sorting,
     onSortingChange,
 }: Props) {
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
     const [pageInput, setPageInput] = useState('')
 
     const handleSortingChange = (updaterOrValue) => {
@@ -106,9 +121,11 @@ export function VideoTable({
                 pageSize,
                 pageIndex: page,
             },
+            columnVisibility,
         },
         onSortingChange: handleSortingChange,
         onGlobalFilterChange: onGlobalFilterChange,
+        onColumnVisibilityChange: setColumnVisibility,
         manualSorting: true,
         manualPagination: true,
         pageCount: meta.pageCount,
@@ -156,6 +173,20 @@ export function VideoTable({
                         {Math.min((meta.page + 1) * meta.pageSize, meta.total)} of{' '}
                         {meta.total.toLocaleString()} records
                     </span>
+                    <ColumnSelector
+                        columns={table.getAllLeafColumns()}
+                        onChange={(columnIds) => {
+                            setColumnVisibility(
+                                columnIds.reduce(
+                                    (acc, columnId) => ({
+                                        ...acc,
+                                        [columnId]: true,
+                                    }),
+                                    {}
+                                )
+                            )
+                        }}
+                    />
                 </div>
             </div>
 
