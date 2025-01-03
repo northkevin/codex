@@ -8,24 +8,59 @@ import {
     flexRender,
     type SortingState,
     type VisibilityState,
+    OnChangeFn,
 } from '@tanstack/react-table'
 import { useState } from 'react'
 import type { VideoData } from '../../types/explorer'
 import { formatDuration } from '../../utils/format'
 import { CATEGORY_NAMES } from '../../constants'
 import { ColumnSelector } from './ColumnSelector'
+import { TruncatedList } from './TruncatedList'
 
 const columnHelper = createColumnHelper<VideoData>()
 
+const getTopicName = (url: string) => {
+    try {
+        return new URL(url).pathname.split('/').pop() || url
+    } catch {
+        return url
+    }
+}
+
 const columns = [
+    // Video Details
     columnHelper.accessor('title', {
         header: 'Title',
         cell: (info) => info.getValue(),
     }),
+    columnHelper.accessor('description', {
+        header: 'Description',
+        cell: (info) => info.getValue()?.slice(0, 100) + '...',
+    }),
+    columnHelper.accessor('duration', {
+        header: 'Duration',
+        cell: (info) => formatDuration(info.getValue() || ''),
+    }),
+    columnHelper.accessor('publishedAt', {
+        header: 'Published',
+        cell: (info) => new Date(info.getValue()).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        }),
+    }),
+
+    // Channel Info
     columnHelper.accessor('channelTitle', {
         header: 'Channel',
         cell: (info) => info.getValue() || 'Unknown',
     }),
+    columnHelper.accessor('channelId', {
+        header: 'Channel ID',
+        cell: (info) => info.getValue(),
+    }),
+
+    // Engagement Metrics
     columnHelper.accessor('viewCount', {
         header: 'Views',
         cell: (info) => Number(info.getValue()).toLocaleString(),
@@ -42,14 +77,8 @@ const columns = [
         header: 'Watch Count',
         cell: (info) => info.getValue().length.toLocaleString(),
     }),
-    columnHelper.accessor('duration', {
-        header: 'Duration',
-        cell: (info) => formatDuration(info.getValue() || ''),
-    }),
-    columnHelper.accessor('categoryId', {
-        header: 'Category',
-        cell: (info) => CATEGORY_NAMES[info.getValue() || ''] || 'Unknown',
-    }),
+
+    // Content Flags
     columnHelper.accessor('wasLivestream', {
         header: 'Live',
         cell: (info) => (info.getValue() ? '🔴' : ''),
@@ -57,6 +86,32 @@ const columns = [
     columnHelper.accessor('licensedContent', {
         header: 'Licensed',
         cell: (info) => (info.getValue() ? '©️' : ''),
+    }),
+
+    // Categories & Tags
+    columnHelper.accessor('categoryId', {
+        header: 'Category',
+        cell: (info) => CATEGORY_NAMES[info.getValue() || ''] || 'Unknown',
+    }),
+    columnHelper.accessor('topicCategories', {
+        header: 'Topics',
+        cell: (info) => (
+            <TruncatedList
+                items={info.getValue()?.map(url => getTopicName(url)) || []}
+                maxItems={3}
+                maxLength={50}
+            />
+        ),
+    }),
+    columnHelper.accessor('tags', {
+        header: 'Tags',
+        cell: (info) => (
+            <TruncatedList
+                items={info.getValue() || []}
+                maxItems={3}
+                maxLength={50}
+            />
+        ),
     }),
 ]
 
@@ -77,6 +132,8 @@ interface Props {
     onGlobalFilterChange: (filter: string) => void
     sorting: SortingState
     onSortingChange: (sorting: SortingState) => void
+    columnVisibility: VisibilityState
+    onColumnVisibilityChange: (visibility: VisibilityState) => void
 }
 
 export function VideoTable({
@@ -91,22 +148,22 @@ export function VideoTable({
     onGlobalFilterChange,
     sorting,
     onSortingChange,
+    columnVisibility,
+    onColumnVisibilityChange,
 }: Props) {
-    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
     const [pageInput, setPageInput] = useState('')
 
-    const handleSortingChange = (updaterOrValue) => {
+    const handleSortingChange: OnChangeFn<SortingState> = (updaterOrValue) => {
         const newSorting = typeof updaterOrValue === 'function'
             ? updaterOrValue(sorting)
             : updaterOrValue;
 
-        // Convert to tri-state sorting
         const triStateSorting = newSorting.map(sort => {
             const currentSort = sorting.find(s => s.id === sort.id);
-            if (!currentSort) return { ...sort, desc: false }; // First click: ascending
-            if (!currentSort.desc) return { ...sort, desc: true }; // Second click: descending
-            return null; // Third click: no sorting
-        }).filter(Boolean);
+            if (!currentSort) return { ...sort, desc: false };
+            if (!currentSort.desc) return { ...sort, desc: true };
+            return undefined;
+        }).filter((sort): sort is { id: string; desc: boolean } => sort !== undefined);
 
         onSortingChange(triStateSorting);
     }
@@ -125,7 +182,12 @@ export function VideoTable({
         },
         onSortingChange: handleSortingChange,
         onGlobalFilterChange: onGlobalFilterChange,
-        onColumnVisibilityChange: setColumnVisibility,
+        onColumnVisibilityChange: (updaterOrValue) => {
+            const newState = typeof updaterOrValue === 'function'
+                ? updaterOrValue(columnVisibility)
+                : updaterOrValue
+            onColumnVisibilityChange(newState)
+        },
         manualSorting: true,
         manualPagination: true,
         pageCount: meta.pageCount,
@@ -133,7 +195,6 @@ export function VideoTable({
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
-        enableSortingRemoval: true,
     })
 
     const handleJumpToPage = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -176,15 +237,16 @@ export function VideoTable({
                     <ColumnSelector
                         columns={table.getAllLeafColumns()}
                         onChange={(columnIds) => {
-                            setColumnVisibility(
-                                columnIds.reduce(
-                                    (acc, columnId) => ({
-                                        ...acc,
-                                        [columnId]: true,
-                                    }),
-                                    {}
-                                )
-                            )
+                            const newVisibility: Record<string, boolean> = table.getAllLeafColumns().reduce((acc, column) => ({
+                                ...acc,
+                                [column.id]: false
+                            }), {})
+
+                            columnIds.forEach(id => {
+                                newVisibility[id] = true
+                            })
+
+                            onColumnVisibilityChange(newVisibility)
                         }}
                     />
                 </div>

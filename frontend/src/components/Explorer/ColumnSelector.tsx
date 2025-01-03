@@ -1,16 +1,24 @@
 import { Column } from '@tanstack/react-table'
+import { VideoData } from '../../types/explorer'
 import { useState } from 'react'
 
 interface Props {
-    columns: Column<any, any>[]
+    columns: Column<VideoData, unknown>[]
     onChange: (columnIds: string[]) => void
 }
 
 export function ColumnSelector({ columns, onChange }: Props) {
     const [isOpen, setIsOpen] = useState(false)
-    const [selectedColumns, setSelectedColumns] = useState<Set<string>>(
-        new Set(columns.map(col => col.id))
-    )
+    const [selectedColumns, setSelectedColumns] = useState<Set<string>>(() => {
+        const stored = localStorage.getItem('explorer-column-visibility')
+        if (stored) {
+            const visibility = JSON.parse(stored)
+            return new Set(Object.entries(visibility)
+                .filter(([, isVisible]) => isVisible)
+                .map(([id]) => id))
+        }
+        return new Set(columns.map(col => col.id))
+    })
 
     const toggleColumn = (columnId: string) => {
         const newSelection = new Set(selectedColumns)
@@ -20,7 +28,14 @@ export function ColumnSelector({ columns, onChange }: Props) {
             newSelection.add(columnId)
         }
         setSelectedColumns(newSelection)
-        onChange(Array.from(newSelection))
+
+        const visibility: Record<string, boolean> = columns.reduce((acc, column) => ({
+            ...acc,
+            [column.id]: newSelection.has(column.id)
+        }), {})
+
+        localStorage.setItem('explorer-column-visibility', JSON.stringify(visibility))
+        onChange(Object.keys(visibility).filter(id => visibility[id]))
     }
 
     return (
@@ -29,7 +44,7 @@ export function ColumnSelector({ columns, onChange }: Props) {
                 onClick={() => setIsOpen(!isOpen)}
                 className="column-selector-button"
             >
-                Columns ({selectedColumns.size})
+                Columns ({selectedColumns.size}/{columns.length})
             </button>
             {isOpen && (
                 <div className="column-selector-dropdown">

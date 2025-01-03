@@ -64,8 +64,122 @@ router.get('/', async (req, res) => {
                         { watches: { _count: sort.desc ? 'desc' : 'asc' } },
                     ]
                     break
+                case 'publishedAt':
+                    orderBy = [
+                        {
+                            publishedAt: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
+                    break
+                case 'channelTitle':
+                    orderBy = [
+                        {
+                            channelTitle: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
+                    break
+                case 'description':
+                    orderBy = [
+                        {
+                            description: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
+                    break
+                case 'likeCount':
+                    orderBy = [
+                        {
+                            likeCount: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
+                    break
+                case 'commentCount':
+                    orderBy = [
+                        {
+                            commentCount: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
+                    break
+                case 'duration':
+                    orderBy = [
+                        {
+                            duration: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
+                    break
+                case 'licensedContent':
+                    orderBy = [
+                        {
+                            licensedContent: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
+                    break
+                case 'topicCategories':
+                    orderBy = [{ topicCategories: sort.desc ? 'desc' : 'asc' }]
+                    break
+                case 'wasLivestream':
+                    orderBy = [
+                        {
+                            wasLivestream: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
+                    break
+                case 'channelId':
+                    orderBy = [
+                        {
+                            channelId: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
+                    break
+                case 'categoryId':
+                    orderBy = [
+                        {
+                            categoryId: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
+                    break
+                case 'tags':
+                    orderBy = [{ tags: sort.desc ? 'desc' : 'asc' }]
+                    break
+
                 default:
-                    orderBy = [{ [sort.id]: sort.desc ? 'desc' : 'asc' }]
+                    orderBy = [
+                        {
+                            [sort.id]: {
+                                sort: sort.desc ? 'desc' : 'asc',
+                                nulls: 'last',
+                            },
+                        },
+                    ]
             }
         } else {
             orderBy = [{ watches: { _count: 'desc' } }]
@@ -82,35 +196,53 @@ router.get('/', async (req, res) => {
             select: {
                 videoId: true,
                 title: true,
+                description: true,
+                publishedAt: true,
+                channelId: true,
+                channelTitle: true,
                 categoryId: true,
                 tags: true,
                 viewCount: true,
+                likeCount: true,
+                commentCount: true,
                 duration: true,
-                channelTitle: true,
                 wasLivestream: true,
+                licensedContent: true,
                 watches: {
                     select: {
                         watchedAt: true,
                     },
                 },
+                topicCategories: true,
             },
             orderBy,
             skip: page * pageSize,
             take: pageSize,
         })
 
+        const sortByField = sortBy ? sortBy[0].id : 'viewCount'
         // Debug log the first few results
         console.log(
             'First few results:',
             videos.slice(0, 3).map((v) => ({
                 title: v.title,
-                viewCount: v.viewCount?.toString(),
+                sort: sortByField,
+                // viewCount: v.viewCount?.toString(),
+
+                ...(sortByField && {
+                    [sortByField]:
+                        typeof v[sortByField as keyof typeof v] === 'bigint'
+                            ? v[sortByField as keyof typeof v]?.toString()
+                            : v[sortByField as keyof typeof v],
+                }),
             }))
         )
 
         const serializedVideos = videos.map((video) => ({
             ...video,
             viewCount: video.viewCount?.toString() || null,
+            likeCount: video.likeCount?.toString() || null,
+            commentCount: video.commentCount?.toString() || null,
         }))
 
         res.json({
