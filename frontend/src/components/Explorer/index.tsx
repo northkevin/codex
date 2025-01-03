@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { explorerApi } from '../../api/client'
-import type { VideoData } from '../../types/explorer'
+import { VideoTable } from './VideoTable'
+
+import './Explorer.css'
 
 export function Explorer() {
     const { data: videos, isLoading, error } = useQuery({
@@ -15,7 +17,7 @@ export function Explorer() {
     return (
         <div className="explorer-container">
             <h1>Video Explorer</h1>
-            <pre>{JSON.stringify(videos.slice(0, 5), null, 2)}</pre>
+            <VideoTable data={videos} />
         </div>
     )
 }
