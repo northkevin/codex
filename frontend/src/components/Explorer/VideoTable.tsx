@@ -3,6 +3,7 @@ import {
     getCoreRowModel,
     getSortedRowModel,
     getFilteredRowModel,
+    getPaginationRowModel,
     createColumnHelper,
     flexRender,
     type SortingState,
@@ -47,11 +48,34 @@ const columns = [
 
 interface Props {
     data: VideoData[]
+    meta: {
+        total: number
+        page: number
+        pageSize: number
+        pageCount: number
+    }
+    page: number
+    pageSize: number
+    globalFilter: string
+    onPageChange: (page: number) => void
+    onPageSizeChange: (pageSize: number) => void
+    onSearch: (search: string) => void
+    onGlobalFilterChange: (filter: string) => void
 }
 
-export function VideoTable({ data }: Props) {
+export function VideoTable({
+    data,
+    meta,
+    page,
+    pageSize,
+    globalFilter,
+    onPageChange,
+    onPageSizeChange,
+    // onSearch,
+    onGlobalFilterChange,
+}: Props) {
     const [sorting, setSorting] = useState<SortingState>([])
-    const [globalFilter, setGlobalFilter] = useState('')
+    const [pageInput, setPageInput] = useState('')
 
     const table = useReactTable({
         data,
@@ -59,24 +83,59 @@ export function VideoTable({ data }: Props) {
         state: {
             sorting,
             globalFilter,
+            pagination: {
+                pageSize,
+                pageIndex: page,
+            },
         },
         onSortingChange: setSorting,
-        onGlobalFilterChange: setGlobalFilter,
+        onGlobalFilterChange: onGlobalFilterChange,
         getCoreRowModel: getCoreRowModel(),
         getSortedRowModel: getSortedRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        manualPagination: true,
+        pageCount: meta.pageCount,
     })
+
+    const handleJumpToPage = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') {
+            const newPage = Number(pageInput)
+            if (!isNaN(newPage) && newPage >= 1 && newPage <= meta.pageCount) {
+                onPageChange(newPage - 1)
+            }
+            setPageInput('')
+        }
+    }
 
     return (
         <div className="video-table-container">
             <div className="table-controls">
-                <input
-                    type="text"
-                    value={globalFilter}
-                    onChange={(e) => setGlobalFilter(e.target.value)}
-                    placeholder="Search videos..."
-                    className="search-input"
-                />
+                <div className="controls-row">
+                    <input
+                        type="text"
+                        value={globalFilter}
+                        onChange={(e) => onGlobalFilterChange(e.target.value)}
+                        placeholder="Search videos..."
+                        className="search-input"
+                    />
+                    <select
+                        value={pageSize}
+                        onChange={(e) => onPageSizeChange(Number(e.target.value))}
+                        className="page-size-select"
+                    >
+                        {[10, 25, 50, 100].map((size) => (
+                            <option key={size} value={size}>
+                                Show {size}
+                            </option>
+                        ))}
+                    </select>
+                    <span className="record-count">
+                        Showing {meta.page * meta.pageSize + 1}-
+                        {Math.min((meta.page + 1) * meta.pageSize, meta.total)} of{' '}
+                        {meta.total.toLocaleString()} records
+                    </span>
+                </div>
             </div>
 
             <div className="table-wrapper">
@@ -118,6 +177,50 @@ export function VideoTable({ data }: Props) {
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            <div className="pagination-controls">
+                <button
+                    onClick={() => onPageChange(0)}
+                    disabled={page === 0}
+                    className="pagination-button"
+                >
+                    {'<<'}
+                </button>
+                <button
+                    onClick={() => onPageChange(page - 1)}
+                    disabled={page === 0}
+                    className="pagination-button"
+                >
+                    {'<'}
+                </button>
+                <span className="pagination-info">
+                    Page {page + 1} of {meta.pageCount}
+                </span>
+                <div className="jump-to-page">
+                    <input
+                        type="text"
+                        value={pageInput}
+                        onChange={(e) => setPageInput(e.target.value)}
+                        onKeyDown={handleJumpToPage}
+                        placeholder="Go to page"
+                        className="jump-input"
+                    />
+                </div>
+                <button
+                    onClick={() => onPageChange(page + 1)}
+                    disabled={page >= meta.pageCount - 1}
+                    className="pagination-button"
+                >
+                    {'>'}
+                </button>
+                <button
+                    onClick={() => onPageChange(meta.pageCount - 1)}
+                    disabled={page >= meta.pageCount - 1}
+                    className="pagination-button"
+                >
+                    {'>>'}
+                </button>
             </div>
         </div>
     )

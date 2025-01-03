@@ -42,10 +42,28 @@ export const statsApi = {
     },
 }
 
+export interface PaginatedResponse<T> {
+    data: T[]
+    meta: {
+        total: number
+        page: number
+        pageSize: number
+        pageCount: number
+    }
+}
+
 export const explorerApi = {
-    getVideos: async (): Promise<VideoData[]> => {
-        const url = `${API_URL}${API_BASE}/explorer`
-        console.log('Fetching videos from:', url)
+    getVideos: async (
+        page: number = 0,
+        pageSize: number = 25,
+        search?: string
+    ): Promise<PaginatedResponse<VideoData>> => {
+        const url = new URL(`${API_URL}${API_BASE}/explorer`)
+        url.searchParams.set('page', page.toString())
+        url.searchParams.set('pageSize', pageSize.toString())
+        if (search) url.searchParams.set('search', search)
+
+        console.log('Fetching videos from:', url.toString())
 
         const response = await fetch(url)
         if (!response.ok) {

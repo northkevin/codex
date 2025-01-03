@@ -12,6 +12,8 @@
 .search-input {
     width: 100%;
     max-width: 300px;
+    min-width: 200px;
+    flex: 1;
     padding: 0.75rem 1rem;
     border: 1px solid rgba(0,0,0,0.1);
     border-radius: 8px;
@@ -50,4 +52,81 @@ td {
 
 tr:hover td {
     background: rgba(0,0,0,0.02);
+}
+
+.controls-row {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.page-size-select {
+    padding: 0.75rem;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--background-secondary);
+}
+
+.pagination-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    flex-wrap: wrap;
+}
+
+.pagination-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    background: var(--background-secondary);
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-button:not(:disabled):hover {
+    background: var(--background-primary);
+}
+
+.pagination-info {
+    padding: 0 1rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.record-count {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.jump-to-page {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.jump-input {
+    width: 80px;
+    padding: 0.5rem;
+    border: 1px solid rgba(0,0,0,0.1);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.jump-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
 }
