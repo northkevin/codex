@@ -8,19 +8,19 @@ import { ParentSize } from '@visx/responsive'
 import { DurationVsViews } from './DurationVsViews'
 import { PublishingHeatmap } from './PublishingHeatmap'
 
-interface ViewsOverTime {
-    date: string
-    views: number
-    title: string
-}
+// interface ViewsOverTime {
+//     date: string
+//     views: number
+//     title: string
+// }
 
-interface TopPerforming {
-    title: string
-    views: number
-    tags: string[]
-    duration: number
-    publishedAt: string
-}
+// interface TopPerforming {
+//     title: string
+//     views: number
+//     tags: string[]
+//     duration: number
+//     publishedAt: string
+// }
 
 function ContentInsightsContent() {
     const { data } = useQuery({

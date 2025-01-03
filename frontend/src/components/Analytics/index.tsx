@@ -7,22 +7,36 @@ import './Analytics.css'
 import { ErrorBoundary } from 'react-error-boundary'
 import { ErrorFallback } from '../ErrorFallback'
 import { useState, Suspense } from 'react'
+import { WordMapControls } from './WordMapControls'
+import { WordMapStyle, COLOR_SCHEMES } from './wordMapConfig'
 
 interface Word {
     text: string
     value: number
 }
 
-const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b']
-const getColor = (i: number) => colors[i % colors.length]
+interface TagData {
+    tag: string
+    count: number
+}
+
+interface TopicData {
+    topic: string
+    count: number
+}
 
 function WordMap({ words, width, height }: { words: Word[], width: number, height: number }) {
-    const [spiralType, setSpiralType] = useState<'archimedean' | 'rectangular'>('archimedean');
-    const [withRotation, setWithRotation] = useState(false);
+    const [style, setStyle] = useState<WordMapStyle>({
+        colorScheme: 'default',
+        minFontSize: 10,
+        maxFontSize: 50,
+        padding: 4,
+        spiralType: 'archimedean',
+        withRotation: false,
+        fontFamily: 'Inter, system-ui, sans-serif'
+    })
 
     if (!words?.length) return null;
-
-
 
     const values = words.map(w => w.value);
     const minValue = Math.max(1, Math.min(...values));
@@ -30,7 +44,7 @@ function WordMap({ words, width, height }: { words: Word[], width: number, heigh
 
     const fontSize = scaleLog({
         domain: [minValue, maxValue],
-        range: [10, 50],
+        range: [style.minFontSize, style.maxFontSize],
         base: Math.E,
     });
 
@@ -41,52 +55,35 @@ function WordMap({ words, width, height }: { words: Word[], width: number, heigh
     };
 
     return (
-        <div className="wordcloud">
-            <Wordcloud
-                words={words}
-                width={width}
-                height={height}
-                fontSize={(w) => fontSize(w.value)}
-                font={'Inter, system-ui, sans-serif'}
-                padding={4}
-                spiral={spiralType}
-                rotate={withRotation ? getRotationDegree : 0}
-                random={() => 0.5}
-            >
-                {(cloudWords) =>
-                    cloudWords.map((w, i) => (
-                        <Text
-                            key={w.text}
-                            fill={getColor(i)}
-                            textAnchor="middle"
-                            transform={`translate(${w.x}, ${w.y}) rotate(${w.rotate})`}
-                            fontSize={w.size}
-                            fontFamily={w.font}
-                        >
-                            {w.text}
-                        </Text>
-                    ))
-                }
-            </Wordcloud>
-            <div className="controls">
-                <label>
-                    Spiral type &nbsp;
-                    <select
-                        onChange={(e) => setSpiralType(e.target.value as 'archimedean' | 'rectangular')}
-                        value={spiralType}
-                    >
-                        <option value="archimedean">archimedean</option>
-                        <option value="rectangular">rectangular</option>
-                    </select>
-                </label>
-                <label>
-                    With rotation &nbsp;
-                    <input
-                        type="checkbox"
-                        checked={withRotation}
-                        onChange={() => setWithRotation(!withRotation)}
-                    />
-                </label>
+        <div className="word-map-container">
+            <WordMapControls style={style} onChange={setStyle} />
+            <div className="wordcloud">
+                <Wordcloud
+                    words={words}
+                    width={width}
+                    height={height}
+                    fontSize={(w) => fontSize(w.value)}
+                    font={style.fontFamily}
+                    padding={style.padding}
+                    spiral={style.spiralType}
+                    rotate={style.withRotation ? getRotationDegree : 0}
+                    random={() => 0.5}
+                >
+                    {(cloudWords) =>
+                        cloudWords.map((w, i) => (
+                            <Text
+                                key={w.text}
+                                fill={COLOR_SCHEMES[style.colorScheme][i % COLOR_SCHEMES[style.colorScheme].length]}
+                                textAnchor="middle"
+                                transform={`translate(${w.x}, ${w.y}) rotate(${w.rotate})`}
+                                fontSize={w.size}
+                                fontFamily={w.font}
+                            >
+                                {w.text}
+                            </Text>
+                        ))
+                    }
+                </Wordcloud>
             </div>
         </div>
     );
@@ -112,16 +109,16 @@ function AnalyticsContent() {
     })
 
     const tagWords = data?.tags
-        .filter(({ count }) => count > 1)
+        .filter(({ count }: TagData) => count > 1)
         .slice(0, 200)
-        .map(({ tag, count }) => ({
+        .map(({ tag, count }: TagData) => ({
             text: tag,
             value: count,
         }))
 
     const topicWords = data?.topics
-        .filter(({ count }) => count > 2)
-        .map(({ topic, count }) => ({
+        .filter(({ count }: TopicData) => count > 2)
+        .map(({ topic, count }: TopicData) => ({
             text: topic,
             value: count,
         }))
