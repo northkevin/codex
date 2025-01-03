@@ -1,8 +1,9 @@
 import { useStats } from '../../hooks/useStats'
-import { BasicStats } from './BasicStats'
-import { ChannelStats } from './ChannelStats'
-import { TimeStats } from './TimeStats'
-import { CategoryStats } from './CategoryStats'
+import { BasicStatsSection } from './BasicStats'
+import { ChannelStatsSection } from './ChannelStats'
+import { TimeStatsSection } from './TimeStats'
+import { CategoryStatsSection } from './CategoryStats'
+import { AttributeStatsSection } from './AttributeStats'
 import './Stats.css'
 
 export function Stats() {
@@ -14,10 +15,11 @@ export function Stats() {
 
     return (
         <div className="stats-container">
-            <BasicStats data={stats.basic} />
-            <ChannelStats data={stats.channels} />
-            <TimeStats data={stats.time} />
-            <CategoryStats data={stats.categories} />
+            <BasicStatsSection data={stats.basicStats} />
+            <ChannelStatsSection data={stats.channelStats} />
+            <TimeStatsSection data={stats.timeStats} />
+            <CategoryStatsSection data={stats.categoryStats} />
+            <AttributeStatsSection data={stats.attributeStats} />
         </div>
     )
 }

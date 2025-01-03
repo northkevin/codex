@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { prisma } from '../../db'
 import type { TimeStats } from './types'
 import { addDurations } from '../../utils/duration'
 

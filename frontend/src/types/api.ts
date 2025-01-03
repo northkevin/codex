@@ -1,13 +1,20 @@
-// Common API response wrapper
-export interface ApiResponse<T> {
-    data: T
-    error?: string
+import type {
+    BasicStats,
+    ChannelStats,
+    TimeStats,
+    CategoryStats,
+    AttributeStats,
+} from './stats'
+
+export interface ApiError {
+    message: string
+    status?: number
 }
 
-// Stats response matches our backend types
 export interface StatsResponse {
-    basic: BasicStats
-    channels: ChannelStats
-    time: TimeStats
-    categories: CategoryStats
+    basicStats: BasicStats
+    channelStats: ChannelStats
+    timeStats: TimeStats
+    categoryStats: CategoryStats
+    attributeStats: AttributeStats
 }

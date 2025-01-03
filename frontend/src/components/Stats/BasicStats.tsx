@@ -5,7 +5,7 @@ interface Props {
     data: BasicStatsType
 }
 
-export function BasicStats({ data }: Props) {
+export function BasicStatsSection({ data }: Props) {
     return (
         <div className="stat-section">
             <div className="basic-stats">

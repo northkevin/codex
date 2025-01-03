@@ -4,7 +4,7 @@ interface Props {
     data: TimeStatsType
 }
 
-export function TimeStats({ data }: Props) {
+export function TimeStatsSection({ data }: Props) {
     const years = Object.entries(data.watchesByYear)
         .sort(([a], [b]) => Number(a) - Number(b))
 

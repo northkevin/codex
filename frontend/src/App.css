@@ -1,148 +1,104 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* Base styles */
+:root {
+    --background-primary: #f5f7fa;
+    --background-secondary: #ffffff;
+    --text-primary: #1d1d1f;
+    --text-secondary: #86868b;
+    --accent-color: #2196f3;
+    --border-radius: 16px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --container-width: 1200px;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 2rem;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-primary);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+/* App container */
+.app {
+    min-height: 100vh;
+    padding: var(--spacing-lg);
 }
 
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Main content area */
+.content {
+    max-width: var(--container-width);
+    margin: 0 auto;
+    padding: var(--spacing-lg);
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
+/* Page header */
+.page-header {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid rgba(0,0,0,0.1);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
 }
 
-.card {
-  padding: 2em;
+/* Stats container adjustments */
+.stats-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
 }
 
-.read-the-docs {
-  color: #888;
+/* Loading state */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: var(--text-secondary);
+    font-size: 1.125rem;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem;
-}
-
-h1 {
-  margin-bottom: 2rem;
-  color: #1a1a1a;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-}
-
-.stat-card {
-  background: #ffffff;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.stat-value {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #2563eb;
-  margin: 0.5rem 0;
-}
-
-.stat-detail {
-  font-size: 0.875rem;
-  color: #666;
-}
-
-.stat-sections {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 2rem;
-}
-
-.stat-section {
-  background: #ffffff;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.channels-list,
-.year-stats {
-  margin-top: 1rem;
-}
-
-.channel-item,
-.year-item {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 1rem;
-  padding: 0.75rem;
-  align-items: center;
-  border-bottom: 1px solid #eee;
-}
-
-.rank {
-  font-weight: bold;
-  color: #2563eb;
-  width: 2rem;
-}
-
-.count {
-  color: #666;
-}
-
-.year-item {
-  position: relative;
-}
-
-.bar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 100%;
-  background: #e5edff;
-  z-index: 0;
-  transition: width 0.3s ease;
-}
-
-.year,
-.count {
-  position: relative;
-  z-index: 1;
-}
-
-.loading,
+/* Error state */
 .error {
-  text-align: center;
-  padding: 2rem;
-  font-size: 1.2rem;
-  color: #666;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: #ff3b30;
+    font-size: 1.125rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .app {
+        padding: var(--spacing-md);
+    }
+
+    .content {
+        padding: var(--spacing-md);
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .app {
+        padding: 0;
+    }
+
+    .content {
+        max-width: none;
+    }
 }

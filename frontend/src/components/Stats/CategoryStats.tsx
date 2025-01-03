@@ -5,7 +5,7 @@ interface Props {
     data: CategoryStatsType
 }
 
-export function CategoryStats({ data }: Props) {
+export function CategoryStatsSection({ data }: Props) {
     const totalVideos = data.categoryDistribution.reduce(
         (sum, cat) => sum + cat._count,
         0

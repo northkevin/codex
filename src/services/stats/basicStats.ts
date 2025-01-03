@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { prisma } from '../../db'
 import type { BasicStats } from './types'
 
 export async function getBasicStats(
